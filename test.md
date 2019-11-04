@@ -1,6 +1,8 @@
+---
 layout: page
-title: "PAGE TITLE"
+title: test
 permalink: /test/
+---
 
 # this is test page
 
