@@ -25,7 +25,7 @@ description: #>- # this means to ignore newlines until "baseurl:"
   모자란 생각이라도 감히 끄적여보기.
   내 자신을 솔직히 보여주기.
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://chanjun-park.github.io/" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
 github_username:  ChanJun-Park
 
