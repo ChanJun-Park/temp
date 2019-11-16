@@ -20,7 +20,7 @@
 
 title: chanjun-park's blog
 email: pcj01142@gmail.com
-description: >- # this means to ignore newlines until "baseurl:"
+description: #>- # this means to ignore newlines until "baseurl:"
   배운 것들을 기록하고 나만의 것으로 표현하기
   모자란 생각이라도 감히 끄적여보기
   내 자신을 솔직히 보여주기
