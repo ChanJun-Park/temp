@@ -1,6 +1,8 @@
+---
 layout: page
 title: "test2"
 permalink: /about/test2/
+---
 
 # This is Test 2 Content
 
