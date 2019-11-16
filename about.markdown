@@ -1,18 +1,17 @@
 ---
 layout: page
-title: About
+title: About me
 permalink: /about/
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+![myself]({{ "assets/img/img1/handol.jpg" | absolute_url }})
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+안녕하세요!
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
+인하대학교 컴퓨터공학과에 재학중인 박찬준입니다.
 
+제가 배운 것들을 기록하고, 돌아보기 위해서 만든 사이트입니다. 잘못된 부분이 있을 수 있습니다.
 
-[jekyll-organization]: https://github.com/jekyll
+함께 공부해요!
+
+[네이버 블로그](https://blog.naver.com/pcj01142)
