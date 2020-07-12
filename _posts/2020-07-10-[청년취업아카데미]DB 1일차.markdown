@@ -1,0 +1,252 @@
+---
+layout: post
+comments: true
+title:  "[청년취업아카데미] DB 1일차 - 오라클 DB 소개 및 기본 SELECT 쿼리"
+date:   2020-07-10 22:07:51 +0900
+categories: study
+---
+## 데이터베이스(DataBase)
+
+### 데이터베이스란
+
+**데이터베이스(DB:DataBase)** 란 통합하여 관리되는 데이터의 집합체를 의미한다.
+
+데이터베이스를 사용하여 데이터를 관리하는 것은 다음과 같은 장점이 있다.
+
+- 기본적으로 데이터를 저장할 수 있다. **(Stored Data)**
+- 데이터를 통합적 **(Integrated)** 으로 관리할 수 있다.
+- 여러 응용 프로그램에서 공유 **(Share)** 할 수 있다.
+- **Operational Data** 로서 여러 운영에 사용될 수 있다.
+
+데이터를 저장하는 방법은 데이터베이스 이외에 운영체제 **파일(File)** 형태로 저장하는 방법이 있다. 데이터베이스를 구축하여 데이터를 관리하는 방법은 파일 형태로 관리하는 방법보다 좋은 점이 있다. 예를 들어 어느 회사의 인사팀, 시설팀, 영업팀에서 팀 내의 사원 데이터를 관리할 필요가 있다고 해보자. 각 팀에서는 자신들만의 응용프로그램이나 사원 관리 시스템으로 사원들을 관리하고, 데이터는 각각의 응용프로그램이 파일 형태로 저장한다. 인사팀에서는 사원의 이름, 부서, 연봉정보, 입사일을 관리하고, 시설팀에서는 이름, 보유 기술, 영업팀에서는 이름, 영업 지역을 관리한다고 했을 때 여러 문제점이 있다.
+
+먼저 각 팀에서 관리하는 데이터의 일관성이 떨어질 우려 **(inconsistency)** 가 있다. 예를 들어서 시설팀의 A라는 사원이 B라는 이름으로 개명하고, 이 사실을 시설팀의 파일에만 갱신하는 경우, 인사팀의 파일에 저장된 데이터와 일치하지 않는다. 또한 사원의 이름은 모든 팀의 파일 데이터에서 저장되는데 이는 불필요한 중복이며 자원을 낭비하는 일이다.
+
+이 같은 문제들은 데이터베이스(DB)를 이용하여 데이터를 관리함으로써 해결할 수 있다. 데이터베이스는 모든 데이터를 **integrate** 하여 한 곳에서 관리하며, 이를 여러 응용프로그램에서 공유(**Sharable**)해서 사용할 수 있도록 한다. 이러한 특징을 통해서 데이터가 여러 공간에 분산되어 저장될 때 데이터의 일관성이 떨어질 수 있는 문제를 해결한다. 또한 하나의 데이터베이스 시스템을 여러 프로그램에서 공유하게 할 수 있기 때문에 여러 운영에서 Operational 하게 사용될 수 있다.
+
+### RDB (Relational DataBase)
+
+**RDB**는 데이터를 저장할 때 일종의 표의 형태로 데이터를 저장하는 시스템이다. 하나의 Data Object는 여러 속성들의 집합으로 표현된다. 이러한 속성은 표에서 **열**의 제목으로 생각할 수 있다. RDB에 저장된 각각의 데이터는 표에서 하나의 **행**으로 생각할 수 있다. 또한 행과 열이 교차하는 지점에서 나타나는, 데이터 객체의 한 속성의 값을 **필드(Field)** 라고 부른다. 이 필드에는 오직 하나의 값만이 저장될 수 있다.
+
+## DBMS(DataBase Management System)
+
+DB에서 원하는 데이터를 검색하거나, 데이터를 저장하거나 조작하는 기능을 제공한다. 데이터를 **정의(Definition)** 하고, **조작(Manipulation)** 하고, **제어(Control)** 하는 기능을 제공한다.
+
+## Oracle DB Server Architecture
+
+### Oracle DB Server Architecture
+
+![oracle_db_server_acrchtecture]({{ "/assets/img/img_multi_1/Oracle_Server_Architecture.png"}})
+
+**Oracle DB Server Architecture** 는 위의 그림과 같은 구조로 되어있다. 먼저 DB Server process 들이 사용할 메모리 공간에 대한 Structure가 있다. 이 Memory Structure는 **SGA(System Global Area)** 와 **PGA(Process Global Area)** 로 구성되는데 SGA는 DB 기능을 위한 여러 Backgroud Process와 Server Process 가 공유하는 데이터를 관리하는 장소이다.
+
+다음으로 Oracle DB 를 동작시키는 Process 들에 대한 Structure가 있다. 이 프로세스들은 백그라운드에서 여러 처리들을 수행하는 **Background Process**, 클라이언트와 연결되어 sql 쿼리문을 수행하거나, 결과를 반환하는 **Server Process** 로 구성된다.
+
+**Oracle (Database) Instance** 는 SGA와 Background Process들의 집합을 나타내는 용어이다. Oracle (Database) Instance는 **SID(System Identifier)** 라고 하는 고유 아이디로 구분될 수 있다.
+
+Oracle Instance 가 생성되고 시작되면 이 Oracle Instance에는 물리적인 storage에 저장된 Database와 연결이 된다. 이때 연결되는 Database를 **Oracle Database** 라고 부른다. 이렇게 Oracle Instance와 Oracle Database가 연결되고 난 뒤에 user가 Database에 연결하여 DB를 사용할 수 있는 상태가 된다.
+
+최종적으로 **Oracle DB Server Architecture** 는 **Oracle Instance** 와 **Oracle Database** 로 구성되는 개념이라고 생각할 수 있다.
+
+## Oracle DB Server 와 연결하기
+
+### User Process
+
+**Oracle DB Server Architecture** 만으로는 user가 DB를 이용할 수는 없다. 사용자가 손쉽게 DB를 사용할 수 있도록 하는 application이나 Oracle Tool을 사용해야 한다. 대표적으로 SQL developer 프로그램이나, SQL*Plus 와 같은 것들이 있다. SQL developer 같은 프로그램의 대표적인 기능은 사용자가 수행하기를 원하는 SQL query 문 작성을 돕고, 이를 Server Process에 전송한 뒤 결과값을 받아오는 것이다. 
+
+### SQL
+
+**SQL(Structrued Query Language)** 란 RDB 시스템에서 데이터를 조회하거나 수정하고자 할 때 사용하는 언어(Language)이다. **SQL(Structrued Query Language)** 는 ANSI에서 정의한 표준 언어로서 오라클 DB 뿐만 아니라 MySql, MsSql, MariaDB 등과 같은 다른 여러 DBMS에서도 사용할 수 있는 언어이다. SQL 명령어는 다음과 같이 분류될 수 있다.
+
+- DML(Data Manipulation Language) : select, insert, update, delete, merge와 같은 명령어로 데이터를 조회하거나 테이블에 데이터를 삽입하거나, 수정, 삭제와 같은 데이터 조작 기능을 수행한다.
+- DDL(Data Definition Language) : create, alter, drop, truncate, rename, comment와 같은 명령어로 데이터를 저장할 테이블(표)를 생성하거나, 테이블의 구조를 변경 또는 제거하는 등 데이터의 구조를 정의하는 기능을 수행한다.
+- DCL(Data Control Language) : grant, revoke 와 같은 명령어로 DB 사용자의 권한을 수정하는 등이 제어 기능을 수행한다.
+- TCL(Transaction Control Language) : commit, rollback 와 같이 Transaction과 같은 기능을 수행한다. 이때 Transaction에 연관된 기능은 DML 명령어들뿐이다.
+
+### Client와 Oracle DB Server의 연결과정
+
+![oracle_db_server_acrchtecture2]({{ "/assets/img/img_multi_1/Oracle_Server_Architecture2.png"}})
+
+앞서 SQL developer 와 같은 User process는 그것 혼자만으로는 DB에 관련 기능을 수행할 수 없다. 서버 컴퓨터에 저장되어 있는 DB 관련 동작을 수행하기 위해서는 Oracle Server process와 연결하여 Server process에 관련 요청을 보내야한다. User process와 Server Process가 연결되는 과정은 위 그림처럼 표현될 수 있다.
+
+1. 먼저 Oracle DB가 설치되어 있는 Server Computer로 연결 요청을 보내야 한다. 이때 필요한 정보는 protocol 정보(TCP), Server Computer의 ip 주소, Oracle Server로 들어오는 연결 요청을 체크하는 Listener에 대한 정보(포트 번호), Oracle Instance에 대한 정보(SID), 사용할 User의 id와 password 정보가 필요하다.
+2. user process로 부터 Oracle Server로 연결요청이 들어온 경우 Listener Process는 이를 확인하여 앞으로 해당 User process의 요청을 처리할 Server process를 생성(또는 할당)한다. 그 다음 이 Server process에 대한 정보를 user 쪽으로 전달한다.
+3. User process와 Server process가 connection 되었다. User process에서 sql 문장을 전송하면 Server process에서는 이 sql 문장을 Oracle Instance, Oracle Database 에서 실행한 후, 실행 결과를 다시 User process 쪽으로 전달한다.
+
+### Connection 과 Session
+
+**Connection** 은 User process와 Server Process 간의 연결통로이다. **Session** 은 Connection 과는 조금 다르다. **Session** 은 특정 DB 유저를 사용하여 Oracle Server와 연결된 **상태**를 의미한다. 하나의 Connection을 유지한 채 Session을 변경할 수도 있고, 한 User 정보를 이용해서 여러개의 Session을 생성할 수도 있다.
+
+## 2장 기본 SELECT 구문
+
+### 기본 SELECT 문
+
+```sql
+SELECT * | {[DISTINCT] column [alias], ...}
+FROM table;
+```
+
+### Projection
+
+특정한 열의 값만을 보고 싶을 경우 SELECT 구문에 컬럼 명을 명시하여 명시한 열의 값만을 가져오는 것
+
+```sql
+SELECT EMPNAME, EMPSAL
+FROM EMP;
+```
+
+### 기본 연산자
+
+SELECT 를 통해 가져온 데이터에 연산을 한 값을 표시할 수 있다.
+
+```sql
+SELECT EMPNAME, EMPSAL + 100
+FROM EMP;
+```
+
+기본 적인 사칙연산이 가능하다.
+
+### Alias
+
+```sql
+SELECT EMPNAME, EMPSAL + 100
+FROM EMP;
+```
+
+위와 같은 sql 문장의 경우 추출된 데이터의 EMPSAL + 100 컬럼 명(Heading)은 'EMPSAL + 100' 그대로 나타난다. 이와 같은 표시는 가독성을 떨어뜨린다. Alias 기능을 사용하면 이 헤딩 문장을 변경할 수 있다.
+
+```sql
+SELECT EMPNAME, EMPSAL + 100 as "향샹된 연봉"
+FROM EMP;
+```
+
+`as` 키워드는 뒤에 나오는 문자열이 Alias라는 것을 의미한다. 이 키워드는 생략될 수 있다. 또한 "" 기호는 생략될 수 있으나, Alias가 소문자를 포함하고 있고 해당 소문자를 그대로 표현하고 싶은 경우, 띄어쓰기가 있는 경우 "" 기호를 사용하여 Alias를 묶어줘야 한다.
+
+### NULL
+
+**NULL** : 아직 정해지지 않았거나, 의미가 없는 값을 표시할 때 사용한다.
+
+**nvl()** : 오라클의 `nvl` 함수는 select를 통해서 얻은 값이 NULL일 경우를 처리해주는 함수이다.
+
+```sql
+SELECT EMPNAME, EMPSAL, nvl(COMM, 0)
+FROM EMP;
+```
+
+### 연결 연산자(||)
+
+파이프 기호 2개(||)를 사용하여 두 개 이상의 column을 나란히 명시하면, 해당 column들의 데이터가 결과 테이블에 한꺼번에 연결되어 나타난다.
+
+```sql
+SELECT EMPNAME || EMPSAL as "Employees"
+FROM EMP;
+```
+
+### 리터럴 문자열
+
+'' 기호를 사용하여 리터럴 문자열을 이용할 수 있다. 결과 필드 안에 원하는 리터럴 문자열을 추가하여 결과 데이터를 꾸며줄 수 있다.
+
+```sql
+SELECT EMPNAME || '의 월급은 ' || EMPSAL || '입니다' as "Employees"
+FROM EMP;
+```
+
+#### 대체 인용(q) 연산자
+
+만약 사용하고자 하는 리터럴 문자열 안에 인용 기호(') 가 들어 있고, 이 기호를 단순 문자열 데이터로 취급하고자 하는 경우 q 키워드를 이용하여 리터럴을 표시하는 기호를 변경해서 사용할 수 있다.
+
+```sql
+SELECT EMPNAME || q'['s salary is ]' || EMPSAL as "Employees"
+FROM EMP;
+```
+
+또는 인용기호를 두번 작성하여 '를 단순 문자열로 취급할 수도 있다.
+
+```sql
+SELECT EMPNAME || '''s salary is ' || EMPSAL as "Employees"
+FROM EMP;
+```
+
+### 중복 제거 연산자 DISTINCT
+
+```sql
+SELECT DISTINCT EMPSAL
+FROM EMP;
+```
+
+column 명 앞에 DISTINCT 키워드를 붙이면 추출된 결과 테이블에는 다른 행들과 중복되지 않는 유일한 데이터들만 나타난다.
+
+### 테이블 구조 표시 명령 DESC
+
+```sql
+DESC(RIBE) tablename
+```
+
+테이블의 구조를 보여달라는 명령이다. Oracle 자체 명령이며 표준 sql 문장이 아니다. 세미콜론이 아닌 개행 문자로 명령어가 구분되며 DESC 처럼 생략해서 표현할 수 있다.
+
+## 3장 데이터 제한 및 정렬
+
+### SELECTION 을 이용해서 표시되는 데이터 행을 제한하기
+
+```sql
+SELECT * | {[DISTINCT] column [alias], ...}
+FROM tablename
+WHERE logical expression(s);
+```
+
+#### 숫자 데이터
+
+```sql
+SELECT employee_id, last_name, job_id, department_id
+FROM employees
+WHERE department_id = 90;
+```
+
+#### 문자열 데이터
+
+```sql
+SELECT employee_id, last_name, job_id, department_id
+FROM employees
+WHERE last_name = 'Whalen';
+```
+
+#### 날짜 데이터
+
+```sql
+SELECT last_name
+FROM employees
+WHERE hire_date = '17-OCT-03';
+```
+
+위 쿼리에서 '17-OCT-03' 와 같이 날짜를 표시하는 형식는 NLS(Nationial Language Support) 라는 규칙에 의해서 정해진다.
+
+### 비교 연산자
+
+- = : 같음
+- <> : 같지 않음
+- < 보다 작음
+- <= 보다 작거나 같음
+- \>= 보다 크거나 같음
+- \> 보다 큼
+- BETWEEN ...AND... : 두 값 사이(경계값 포함)
+- IN(set) 값 리스트 중 일치하는 값 검색
+- LIKE 일치하는 문자 패턴 검색
+- IS NULL null 값인지 여부
+
+#### 문자열 패턴 검색 Like
+
+- % : 0개 이상의 임의의 문자 시퀀스
+- _ : 1개의 임의의 문자
+
+만약에 찾고자 하는 문자열 패턴 안에 실제로 '%' '_' 기호가 들어가 있는 경우 이 기호를 단순 문자열로 취급하고 싶다면 `ESCAPE` 키워드를 이용해서 escape 문자를 정의한뒤 처리할 수 있다.
+
+```sql
+-- \ 기호 다음 문자는 단순 문자임을 뜻함
+SELECT *
+FROM LTEST
+WHERE B LIKE '%X\_Y%'  ESCAPE  '\' ;
+```
+
+## 참고 자료
+
+1. https://www.thegeekdiary.com/oracle-database-server-architecture-overview/
