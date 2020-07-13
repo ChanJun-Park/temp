@@ -65,6 +65,65 @@ ORDER BY ANNUAL_SAL DESC;
 
 위의 쿼리는 오류가 난다. 쿼리 문장의 실행 순서는 FROM, WHERE, SELECT, ORDER BY 순서로 진행되기 때문에 WHERE절이 실행되는 시점에는 아직 ANNUAL_SAL 라는 Alias가 정의되지 않았기 때문이다.
 
+#### CTAS
+
+테이블과 테이블 데이터를 통째로 복사하는 경우 사용할 수 있다.
+
+```sql
+create table EMP2
+AS SELECT * FROM EMP;
+```
+
+#### ORDER BY 로 출력행 정렬시 NULL 이 처리되는 방식
+
+기본적으로 NULL 값은 ASC- 오름차순 정렬시 맨 나중에, DESC - 내림차순 정렬시 맨 처음 나타난다. 이 같은 규칙을 바꾸고 싶다면 다음과 같이 쿼리를 작성할 수 있다.
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+ORDER BY SAL DESC NULLS LAST;
+
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+ORDER BY SAL ASC NULLS FIRST;
+```
+
+#### ROWNUM
+
+ROWNUM은 실제 테이블에 있는 컬럼이 아닌 오라클에서 제공하는 pseudo 컬럼이다. 이 컬럼을 이용해서 Selection을 진행할 수 있다.
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+WHERE ROWNUM < 5;
+```
+
+#### TOP-N query
+
+ORDER BY 절로 정렬된 데이터에서 상위 몇개의 항목을 추출하기 위해서는 FROM절에 ORDER BY 절로 미리 정렬을 진행한 서브쿼리를 넣고, WHERE절에서 ROWNUM을 이용해서 상위 몇개의 데이터만을 추출할 수 있다.
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM (SELECT * FROM EMP WHERE SAL IS NOT NULL ORDER BY SAL DESC)
+WHERE ROWNUM < 5;
+```
+
+### SQL 행 제한 절 - Oracle 12c 부터 추가된 특징
+
+Oracle 11g 에서 ORDER BY 절은 쿼리 실행 순서에서 맨 마지막에 실행되는 절이며 딱 한번만 실행된다. 따라서 ORDER BY 절이 실행된 후에 정렬된 행 데이터 중 상위 몇개만을 추출하는 연산은 TOP-N query를 수행하지 않고는 불가능했다. 그러나 Oracle 12c 에서 부터는 ORDER BY 절 뒤에 추가적으로 행을 추츨하는 동작이 가능하도록 새로운 연산이 추가되었는데 바로 SQL 행 제한 절이다.
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+ORDER BY SAL DESC
+FETCH FIRST 5 ROWS ONLY;
+
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+ORDER BY SAL DESC
+FETCH FIRST 5 ROWS WITH TIES;
+```
+
 ### 치환변수 사용
 
 ```sql
@@ -73,7 +132,7 @@ FROM EMP
 WHERE SAL > &sal;
 ```
 
-앰퍼센드 기호를 통해서 치환변수라는 것을 선언할 수 있다. 치환변수를 통해서 사용자에게 값을 입력받아 쿼리문을 수행할 수 있다. 치환변수는 한번만 초기화되며 이 후에 사용하려면 다시 사용자에게 값을 입력받아야 한다. 사용자에게 값을 입력받아 치환변수를 여러번 사용하고 싶다면 앰퍼센드 기호를 두번 적어준다 (&&)
+앰퍼센드 기호를 통해서 치환변수라는 것을 선언할 수 있다. 치환변수를 통해서 사용자에게 값을 입력받아 쿼리문을 수행할 수 있다. 치환변수는 한번만 초기화되며 이 후에 사용하려면 다시 사용자에게 값을 입력받아야 한다. 사용자에게 값을 입력받아 치환변수를 여러번 사용하고 싶다면 앰퍼센드 기호를 두번 적어준다 (&&). 이렇게 선언된 치환변수는 해당 세션이 유지되는 동안에 계속해서 사용할 수 있다.
 
 ```sql
 SELECT EMPNO, ENAME, &&col
@@ -89,3 +148,98 @@ SELECT EMPNO, ENAME, SAL
 FROM EMP
 WHERE ENAME = '&name'
 ```
+
+#### define
+
+`define` 키워드도 쿼리 문에서 사용가능한 변수를 생성하는데 사용될 수 있다. 치환변수와 다른점은 사용자에게 값을 입력받는 변수가 아니라, 쿼리문 안에서 값을 할당한다는 것이다.
+
+```sql
+define a = 7788
+select *
+from emp
+where empno = &a;
+```
+
+## 4장 : 단일 행 함수를 이용하여 출력 커스터마이즈
+
+### SQL 함수
+
+인자를 전달받아 값을 출력한다. 하나의 행에 대해서 하나의 값을 반환하는 단일행 함수와, 여러 행의 집합에 대해서 하나의 값을 반환하는 여러 행 함수로 구분된다.
+
+### 단일행 함수
+
+```sql
+function_name [(arg1, arg2, ...)]
+```
+
+### 문자 함수
+
+- lower(str)
+- upper(str)
+- initcap(str)
+- length(str)
+- substr(str, 1, 3)
+- lpad(str, 13, '*')
+- rpad(str, 12, '*')
+- instr(str, target, 1, 2)
+- concat(str1, str2)
+- trim
+- replace
+
+### 함수의 중첩
+
+```sql
+f1(f2(f3(col, arg1), arg2), arg3)
+```
+
+무수한 함수의 중첩이 가능하다.
+
+### 숫자 함수
+
+- ROUND(숫자, 기준 자리수)
+- TRUNC(숫자, 기준 자리수)
+- CEIL(숫자)
+- FLOOR(숫자)
+- MOD(숫자1, 숫자2)
+
+### 날짜 작업
+
+#### RR 날짜 형식
+
+- 0 ~ 49 : 현재 CENTURY로 취급
+- 50 ~ 99 : 현재 CENTURY -1 로 취급
+
+그냥 RRRR 이런식으로 표현한다면 상관없는 내용이다.
+
+#### SYSDATE
+
+현재 오라클 서버가 구동중인 운영체제가 표시하는 시각을 나타낸다.
+
+```sql
+SELECT SYSDATE
+FROM DUAL;
+```
+
+#### 날짜 연산
+
+- 날짜 + 숫자 : 숫자에 표시된 만큼의 일수가 더해짐. 반환되는 값은 날짜값.
+- 날짜 - 숫자 : 숫자에 표시된 만큼의 일수가 빼짐. 반환되는 값은 날짜값.
+- 날짜 - 날짜 : 앞 날짜에서 뒤 날짜 사이의 일수가 반환됨. 반환되는 값은 숫자값.
+- 날짜 + 숫자 / 24 : 날짜에 시간의 수를 더한다. 반환되는 값은 날짜값.
+
+### 날짜 조작 함수
+
+- MONTHS_BETWEEN(날짜, 날짜)
+- ADD_MONTHS
+- NEXT_DAY : 지정된 날짜의 요일
+- LAST_DAY : 월의 마지막 날
+- ROUND : 날짜 반올림
+- TRUNC : 날짜 TRUNCATE
+
+#### 반올림, TRUNCATE
+
+- ROUND(SYSDATE, 'YEAR') : 7월 1일 기준 반올림
+- ROUND(SYSDATE, 'MONTH') : 15일 기준 반올림
+- ROUND(SYSDATE, 'DAY') : 수요일 기준 반올림
+- TRUNC 에서도 동일
+
