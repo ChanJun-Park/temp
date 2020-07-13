@@ -1,0 +1,91 @@
+---
+layout: post
+comments: true
+title:  "[청년취업아카데미] DB 2일차 데이터 제한 및 정렬, 단일행 함수"
+date:   2020-07-13 22:07:51 +0900
+categories: study
+---
+## 오라클 서비스
+
+오라클 DB가 설치되어 있는 운영체제가 부팅될 때 오라클 서비스가 자동으로 실행되도록 설정이 되어 있다. 이를 해제하기 위해서는 윈도우 서비스 항목에서 `OracleServiceXE` 를 확인하고 설정 해제해주면 된다. 또한 오라클 DB가 구동되기 위해서는 필수적으로 `OracleXETNSListener` 로 떠있어야한다.
+
+## 관계형 데이터베이스 관리 개념 및 용어 개요
+
+### 데이터 모델
+
+RDBMS를 이용해서 데이터를 관리하기 위해서는 먼저 관리해야할 데이터를 표의 형태로 모델링 하고 DB를 구축해야한다. DB 구축은 1. 분석, 2. 설계, 3. 구축 단계로 진행된다.
+
+#### 분석 단계
+
+![db_modeling]]({{ "/assets/img/img_multi_2/Data_modeling.png"}})
+
+Analyst는 먼저 업무에 필요한 data를 분석한다. 해당 업무를 분석하기 위해서 담당 부서와의 인터뷰가 수행될 수도 있다. 특정 업무에서 DB로 관리돼야 하는 대상을 파악했을때 이 대상을 `Entity` 로 표현한다. 또한 비즈니스 관점에서 `Entitiy` 를 표현하는 여러가지 특성들을 `Attribute` 라고 한다. 이들 `Attribute` 중에서 하나의 Entitiy를 유일하게 식별해주는 것을 `UID` 라고 하며, '#' 기호로 표시한다. 필수적인 `Attribute` 는 '*' 로 표현한다.
+
+분석 과정에서 나타난 `Entity` 간에는 어떤 관계가 형성될 수 있는데 이를 `Relationship` 이라고 한다. `Relationship`은 3가지 요소로 구성되어 있다. 해당 관계의 Name, Degree, Optionality 가 그것이다.
+
+- Name : `Relationship` 의 종속 관계를 나타낸다. 하나의 `Relationship` 은 상호적인 관계이기 때문에 두 개의 Name으로 표시될 수 있다.
+- Degree : 하나의 엔터티가 몇 개의 다른 엔터티와 연결될 수 있는지를 나타낸다. 부서와 사원 엔터티 간의 관계에서는 하나의 부서가 여러개의 사원 엔터티와 연결되는 형태이며, one-to-many 라는 용어로 표현될 수 있다. 이 때 one 쪽을 parent, master 라는 용어로 표현하고, many 쪽을 child, slave, detail 이라는 용어로 표현한다.
+- Optionality : 하나의 엔터티가 있기 위해서 다른 엔터티가 필수적으로 존재해야 하는 지를 나타낸다. mandatory 는 실선, optional은 점선으로 표현한다.
+
+필요한 Data의 Entity와 Attribute, Entity 간의 Relationship을 표현한 그림을 ERD 라고 한다.
+
+#### 설계 단계
+
+설계 단계에서는 분석 단계에서 도출한 엔터티 모델링을 토대로 테이블 모델링을 진행한다. 이때 구축하고자 하는 DBMS 종류에 따라서 테이블 모델링이 달라지기 때문에 먼저 사용하고자 하는 DBMS 종류를 선택해야한다.
+
+DBMS에서 사용할 테이블을 모델링 할 때 다음과 같이 엔터티 모델링에서 도출했던 여러 속성들이 변환된다.
+
+- Entity 이름 -> Table 이름
+- Entity Attribute -> Table Column
+- uid -> primary key : 해당 row를 유일하게 식별해줄 수 있는 속성
+- Relationship -> foreign key : 참조되는 테이블의 primary key 속성을 참조하는 테이블의 foreign key 로 설정.
+
+## 3장
+
+### Order by 절을 이용해서 출력되는 행의 순서 정렬
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+ORDER BY SAL [ASC];
+
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+ORDER BY SAL DESC;
+```
+
+Order by 키워드 뒤에 나올 수 있는 것들은 컬럼명, 연산식, alias, SELECT 절에 나타난 컬럼의 순서 등이 있다. Order by 절은 쿼리를 구성하는 절 중 가장 마지막에 단 한번 실행된다.
+
+```sql
+SELECT EMPNO, ENAME, SAL * 12 AS ANNUAL_SAL
+FROM EMP
+WHERE ANNUAL_SAL > 12000
+ORDER BY ANNUAL_SAL DESC;
+```
+
+위의 쿼리는 오류가 난다. 쿼리 문장의 실행 순서는 FROM, WHERE, SELECT, ORDER BY 순서로 진행되기 때문에 WHERE절이 실행되는 시점에는 아직 ANNUAL_SAL 라는 Alias가 정의되지 않았기 때문이다.
+
+### 치환변수 사용
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+WHERE SAL > &sal;
+```
+
+앰퍼센드 기호를 통해서 치환변수라는 것을 선언할 수 있다. 치환변수를 통해서 사용자에게 값을 입력받아 쿼리문을 수행할 수 있다. 치환변수는 한번만 초기화되며 이 후에 사용하려면 다시 사용자에게 값을 입력받아야 한다. 사용자에게 값을 입력받아 치환변수를 여러번 사용하고 싶다면 앰퍼센드 기호를 두번 적어준다 (&&)
+
+```sql
+SELECT EMPNO, ENAME, &&col
+FROM EMP
+WHERE SAL > &sal;
+ORDER BY &col
+```
+
+사용자에게 문자열을 입력받게 하려면 인용 기호(') 를 붙여주는 것이 좋다.
+
+```sql
+SELECT EMPNO, ENAME, SAL
+FROM EMP
+WHERE ENAME = '&name'
+```
