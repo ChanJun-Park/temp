@@ -1,0 +1,97 @@
+---
+layout: post
+comments: true
+title:  "[청년취업아카데미] DB 4일차 JOIN, 서브쿼리, 집합연산, DML"
+date:   2020-07-15 22:07:51 +0900
+categories: study
+---
+## JOIN 연산의 유형
+
+- INNER Join
+- Self Join : 자기 참조(Self Reference) 테이블이 자기 자신과 join 하는 경우
+- Equi Join : 조인 조건 컬럼 값을 동등비교(=) 하는 경우
+- Non Equi Join : 조인 조건의 컬럼 값을 동등비교가 아닌 연산을 통해 join 하는 경우
+- OUTER Join : Join 조건을 만족하지 않는 행들도 출력해주기 위한 연산
+
+### Self Join
+
+EMP 테이블에서 사원의 이름과 자신의 매니저 이름을 나타내고자 할때
+
+```sql
+SELECT W.ENAME, M.ENAME
+FROM EMP W JOIN EMP M
+ON W.MGR = M.EMPNO;
+```
+
+### Non Equi Join
+
+Non Equi Join은 조인 조건의 컬럼 값을 동등비교가 아닌 연산을 통해 join 하는 경우를 말한다. 예를 들어 EMP 테이블을 이용해서 사원의 이름과 급여, SALGRADE 테이블을 이용해서 해당 급여가 어떤 등급인지를 나타내고자 할때 다음과 같이 Non Equi Join을 구성할 수 있다.
+
+```sql
+SELECT ENAME, SAL, GRADE
+FROM EMP E JOIN SALGRADE S
+ON E.SAL BETWEEN S.LOWSAL AND S.HISAL;
+```
+
+### Outer Join
+
+Outer Join은 Join 조건을 만족하지 않는 행들도 출력해주기 위한 연산이다. Outer Join에는 다음과 같이 3가지 종류가 있다.
+
+- LEFT OUTER JOIN : Join 한 테이블 중 왼쪽 테이블의 행 데이터에서 조인조건을 만족하지 않는 행들도 포함시켜서 출력한다. Join 하는 기준 오른쪽 테이블에 있는 컬럼의 값들은 NULL 값으로 처리한다.
+- RIGHT OUTER JOIN : Join 한 테이블 중 오른쪽 테이블의 행 데이터에서 조인조건을 만족하지 않는 행들도 포함시켜서 출력한다. Join 하는 기준 왼쪽 테이블에 있는 컬럼의 값들은 NULL 값으로 처리한다.
+- FULL OUTER JOIN : LEFT OUTER JOIN, RIGHT OUTER JOIN을 합친 결과다. 즉, JOIN 조건을 만족하지 않는 왼쪽, 오른쪽 테이블의 행 데이터를 출력에 포함시킨다. 이 때 JOIN 조건을 만족하지 않는 행에 대해서 다른쪽 테이블에 있는 컬럼의 값은 NULL 값으로 처리한다.
+
+```SQL
+SELECT EMPNO, ENAME, E.DEPTNO, DNAME
+FROM EMP E LEFT OUTER JOIN DEPT D
+ON E.DEPTNO = D.DEPTNO
+```
+
+## 8장 : Subquery를 사용하여 Query를 해결
+
+`WHERE` 절과 같이 어떤 조건을 만족시키는 행을 `SELECTION` 하는 부분에서 `EXPRESSION` 의 피연산자로 상수값이 쓰일때가 있다. 이 때 이 상수값이 정해져 있는 값이 아니라 어떤 SQL 쿼리 문장의 결과에서 나타나는 값을 사용할 수 있는데, 이런 상황에서 Subquery를 사용한다. 쿼리 문장에서 사용하는 상수값을 다른 쿼리 문장의 값으로 사용하고자 할때 Subquery를 사용한다.
+
+### WHERE 절에서 서브쿼리 사용하기
+
+'Davids' 라는 사원이 받는 급여보다 높은 급여를 받는 사원의 이름과 연봉을 출력하는 예제
+
+```sql
+SELECT ENAME, SAL
+FROM EMP
+WHERE SAL > (SELECT SAL
+             FROM EMP
+             WHERE ENAME = 'Davids');
+```
+
+서브 쿼리는 연산식에서 어느 쪽이든 올 수 있지만 가독성을 위해서 연산자 오른쪽에 위치시킨다.
+
+### 그룹 함수를 사용한 서브쿼리
+
+회사 평균 급여 이상의 급여를 받는 사원의 이름, 연봉 정보를 알고 싶은 경우
+
+```SQL
+SELECT ENAME, SAL
+FROM EMP
+WHERE SAL >= (SELECT avg(SAL)
+             FROM EMP);
+```
+
+### HAVING 절에서 서브쿼리 사용하기
+
+회사 평균 급여 이상의 평균 급여를 제공하는 부서의 번호, 부서 평균 급여를 알고 싶은 경우
+
+```SQL
+SELECT DEPTNO, AVG(SAL)
+FROM EMP
+GROUP BY (DEPTNO)
+HAVING AVG(SAL) >= (SELECT AVG(SAL)
+                    FROM EMP);
+```
+
+### 다중행(Multiple row) 서브쿼리 사용하기
+
+서브쿼리에서 추출한 데이터 행의 개수가 2개 이상인 경우 다중행 서브쿼리(Multiple Row Subquery) 라고 한다. 이런 다중행 서브 쿼리를 사용할 때는 다중행 연산자를 사용해야한다. 다중행 연산자는 다음과 같은 것들이 있다.
+
+- IN
+- ANY
+- ALL
