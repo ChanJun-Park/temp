@@ -95,3 +95,48 @@ HAVING AVG(SAL) >= (SELECT AVG(SAL)
 - IN
 - ANY
 - ALL
+
+```sql
+SELECT DEPTNO, DNAME
+FROM DEPT
+WHERE DEPTNO IN (SELECT DEPTNO
+                 FROM EMP);
+```
+
+위 쿼리는 근무하고 있는 사원이 한 사림이라도 존재하는 부서의 번호와 이름을 출력한다.
+
+```sql
+SELECT ENAME, SAL
+FROM EMP
+WHERE SAL > ANY (SELECT SAL
+                 FROM EMP
+                 WHERE JOB_ID = 'IT_PROG');
+```
+
+위 쿼리는 IT_PROG 직무를 수행하는 어느 특정 사원보다 많은 급여를 받고 있는 사원의 이름과 급여를 출력한다.
+
+### 다중열(Multiple Column) 서브쿼리 사용하기
+
+```sql
+SELECT
+FROM EMP
+WHERE (DEPTNO, )
+```
+
+### FROM 절에서 서브쿼리 사용하기 : inline view
+
+```sql
+SELECT ENAME, SAL, avg_sal.avg_s
+FROM EMP JOIN (SELECT AVG(SAL) as avg_s FROM EMP) AS avg_sal
+WHERE SAL > avg_s
+```
+
+FROM 절에서 서브쿼리를 사용하면 한 쿼리에서 사용할 수 있는 inline view 객체가 생성되어 이 후 절에도 사용할 수 있는 객체가 된다.
+
+### WHERE절, SELECT 절에서 서브쿼리 사용하기
+
+```SQL
+SELECT ENAME, SAL, (SELECT AVG(SAL) FROM EMP)
+FROM EMP
+WHERE SAL > (SELECT AVG(SAL) FROM EMP);
+```
