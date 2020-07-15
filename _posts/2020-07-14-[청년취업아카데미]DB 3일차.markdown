@@ -116,6 +116,15 @@ where hiredate > to_date('07-14-MON', 'MM-DD-DAY');
 
 문자 타입을 계산 가능한 값으로 변경하고자 할 때, to_number() 함수를 사용한다.
 
+### 일반함수
+
+일반함수는 모든 일반적인 데이터 타입을 인자로 전달할 수 있는 함수를 의미한다. 다음과 같은 일반 함수들이 있다.
+
+- NVL(arg1, arg2) : arg1이 NULL일 경우 arg2 반환
+- NVL2(arg1, arg2, arg3) : arg1이 NULL이 아닐 경우 arg2 반환, NULL일 경우 arg3 반환
+- NULLIF(arg1, arg2) : 두 값이 같을 경우 NULL 반환, 아닌 경우 첫번째 값 반환
+- COALECSE(arg1, arg2, arg3, arg4, ...) : 인자로 전달한 값 중 NULL이 아닌 첫번째 인자를 반환
+
 ### 조건부 표현식
 
 #### DECODE 함수
@@ -303,4 +312,95 @@ SELECT DEPTNO, JOB, SUM(SAL)
 FROM EMP
 GROUP BY GROUPING SETS ((DEPTNO, JOB), (JOB), ())
 ORDER BY 1, 2;
+```
+
+## 7장 : JOIN을 사용하여 다중 테이블의 데이터 표시
+
+### JOIN 유형 및 구문
+
+#### Oracle Syntax
+
+```sql
+SELECT ename, dept.dname
+FROM emp e, dept d
+WHERE e.deptno = d.deptno
+```
+
+#### ANSI Syntax
+
+ANSI Syntax 에서는 JOIN 조건을 ON 절로 따로 빼낼 수 있다는 장점이 있다.
+
+```sql
+SELECT ename, dept.dname
+FROM emp e JOIN dept d
+ON e.deptno = d.deptno
+```
+
+### Natural Join
+
+조인하는 두 테이블에 이름이 동일한 컬럼들을 자동으로 JOIN 조건으로 사용한다.
+
+```sql
+SELECT ename, dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+이와 같은 Natural Join은 기계적으로 이름이 동일한지만을 확인하기 때문에 실제로 두 컬럼이 동일한 의미를 나타내는지를 정확히 확인해야한다.
+
+```sql
+SELECT ename, d.deptno, d.dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+위 문장은 에러가 발생하는데 SELECT 절에 `d.deptno` 처럼 TABLE alias 를 적용한 것이 문제가 된 것이다. NATURAL JOIN을 사용할 경우 SELECT 절에서 행을 뽑아내는 조인 결과 테이블에는 두 개의 테이블에 있던 deptno가 합쳐져서 나타나있다. 따라서 어느 테이블 소속의 컬럼인지를 파악할 수 없기 때문에 아래처럼 table alias를 제외한 `deptno`을 작성해야한다.
+
+```sql
+SELECT ename, deptno, d.dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+#### USING 절을 이용해서 NATURAL JOIN에 사용할 컬럼 명시
+
+```sql
+SELECT ename, deptno, d.dname
+FROM emp e NATURAL JOIN dept d
+USING (deptno);
+```
+
+#### NATURAL JOIN 이나 USING 절 사용시 열이름 한정 사용 불가
+
+```sql
+SELECT ename, d.deptno, d.dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+앞서 위 쿼리문의 오류에서 살펴보았던것 처럼 `USING` 절에서도 NATURAL JOIN에 사용된 열은 alias나 table 이름으로 열 이름을 한정하면 안된다. 그 이유는 앞선 예제에서와 동일하다.
+
+```sql
+SELECT ename, deptno, d.dname
+FROM emp e NATURAL JOIN dept d
+USING (d.deptno);
+```
+
+### 3-WAY JOIN
+
+추출하고자 하는 데이터가 3개의 테이블에 분산되어 있는 경우 join 연산을 여러번 수행하여 원하는 값을 추출할 수 있다.
+
+#### Oracle Syntax
+
+```sql
+SELECT LAST_NAME, D.DEPARTMENT_NAME, L.CITY
+FROM EMPLOYEES E, DEPARTMENTS D, LOCATIONS L
+WHERE E.DEPARTMENT_ID = D.DEPARTMENT_ID
+AND D.LOCATION_ID = L.LOCATION_ID;
+```
+
+#### ANSI Syntax
+
+```sql
+SELECT LAST_NAME, D.DEPARTMENT_NAME, L.CITY
+FROM EMPLOYEES E JOIN DEPARTMENTS D
+ON (E.DEPARTMENT_ID = D.DEPARTMENT_ID)
+JOIN LOCATIONS L
+ON (D.LOCATION_ID = L.LOCATION_ID);
 ```
