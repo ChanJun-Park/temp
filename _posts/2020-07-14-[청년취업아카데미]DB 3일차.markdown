@@ -74,6 +74,7 @@ where to_char(hiredate, 'RR/MM/DD') = '20/07/14';
 - TH : 숫자 서수로 표시
 - SP : 영어 이름으로 표시
 - SPTH : 영어 이름으로 된 서수
+- fm : leading 0를 제거한다.
 
 문자열 내부에 다른 문자열을 추가할 경우 "" 로 감싸 준다.
 
@@ -138,7 +139,12 @@ DECODE (column | expression, 비교값, 표시할 값
 DECODE 함수는 IF~THEN~ELSE 구조를 구현하는 함수이다. 첫번째 인자의 값이 이 후에 반복해서 등장하는 비교값과 같을 경우 해당 비교값 바로 다음에 나오는 표시값을 반환한다. 인자로 전달된 모든 비교값과 동일하지 않은 경우 맨 마지막에 전달한 값이 반환된다.
 
 ```sql
-select 
+SELECT last_name, job_id, salary,
+        DECODE(job_id, 'IT_PROG', 1.10 * SALARY,
+                       'ST_CLERK', 1.15 * SALARY,
+                       'SA_REP', 1.20 * SALARY,
+                       SALARY) REVISED_SALARY
+FROM EMPLOYEES;                       
 ```
 
 #### CASE 식
@@ -155,8 +161,8 @@ DECODE 함수와 유사. 그러나 훨씬 더 가독성이 좋다.
 #### CASE 함수
 
 ```
-CASE WHEN expression THEN 표시할 값1
-    [WHEN expression THEN 표시할 값2]
+CASE WHEN condition THEN 표시할 값1
+    [WHEN condition THEN 표시할 값2]
     [ELSE 디폴트값]
 END 
 ```
@@ -338,7 +344,7 @@ ON e.deptno = d.deptno
 
 ### Natural Join
 
-조인하는 두 테이블에 이름이 동일한 컬럼들을 자동으로 JOIN 조건으로 사용한다.
+조인하는 두 테이블의 이름이 동일한 컬럼들을 자동으로 JOIN 조건으로 사용한다.
 
 ```sql
 SELECT ename, dname
@@ -403,4 +409,13 @@ FROM EMPLOYEES E JOIN DEPARTMENTS D
 ON (E.DEPARTMENT_ID = D.DEPARTMENT_ID)
 JOIN LOCATIONS L
 ON (D.LOCATION_ID = L.LOCATION_ID);
+```
+
+```sql
+select last_name, department_name, city
+from  employees e JOIN  departments d
+ON e.department_id = d.department_id
+JOIN Locations l
+ON d.location_id = l.location_id
+where l.location_id = 1700;    --  추가조건은 WHERE 절에
 ```
