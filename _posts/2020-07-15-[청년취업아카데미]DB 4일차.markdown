@@ -23,6 +23,17 @@ FROM EMP W JOIN EMP M
 ON W.MGR = M.EMPNO;
 ```
 
+#### Hierachical Query (Tree Query)
+
+```sql
+-- Hierachical Query  (Tree query)
+-- level : pseudo column (의사열) 
+select lpad(' ', 2 * level) ||  ename
+from emp
+connect by prior empno = mgr  
+start with ename = 'KING';
+```
+
 ### Non Equi Join
 
 Non Equi Join은 조인 조건의 컬럼 값을 동등비교가 아닌 연산을 통해 join 하는 경우를 말한다. 예를 들어 EMP 테이블을 이용해서 사원의 이름과 급여, SALGRADE 테이블을 이용해서 해당 급여가 어떤 등급인지를 나타내고자 할때 다음과 같이 Non Equi Join을 구성할 수 있다.
@@ -47,9 +58,50 @@ FROM EMP E LEFT OUTER JOIN DEPT D
 ON E.DEPTNO = D.DEPTNO
 ```
 
+#### Oracle Syntax
+
+```sql
+ -- Oracle syntax
+select empno, ename, d.deptno, dname
+from emp2 e , dept d
+where  e.deptno(+) = d.deptno; -- right outer join
+ 
+select empno, ename, d.deptno, dname
+from emp2 e , dept d
+where  e.deptno = d.deptno(+); -- left outer join
+```
+
+#### WHERE 절의 추가조건으로 인해 OUTER JOIN 데이터가 사라지는 경우
+
+추가 조건을 JOIN 조건에 추가해야 OUTER JOIN 의 결과 데이터가 살아남는다.
+
+```sql
+-- OUTER JOIN 데이터가 사라지는 경우
+select  empno, ename, sal,  d.deptno , dname
+from emp e  right outer JOIN  dept d
+ON (  e.deptno = d.deptno)
+WHERE sal > 2000;
+
+-- OUTER JOIN 데이터가 사라지지 않는 경우
+select  empno, ename, sal,  d.deptno , dname
+from emp e  right outer JOIN  dept d
+ON (  e.deptno = d.deptno and sal > 2000);
+```
+
+#### Catesian Product
+
+```sql
+-- Catesian product : oracle 
+select  *
+from emp, dept ;
+-- cross join : ANSI
+select  *
+from emp cross join dept ;
+```
+
 ## 8장 : Subquery를 사용하여 Query를 해결
 
-`WHERE` 절과 같이 어떤 조건을 만족시키는 행을 `SELECTION` 하는 부분에서 `EXPRESSION` 의 피연산자로 상수값이 쓰일때가 있다. 이 때 이 상수값이 정해져 있는 값이 아니라 어떤 SQL 쿼리 문장의 결과에서 나타나는 값을 사용할 수 있는데, 이런 상황에서 Subquery를 사용한다. 쿼리 문장에서 사용하는 상수값을 다른 쿼리 문장의 값으로 사용하고자 할때 Subquery를 사용한다.
+`WHERE` 절과 같이 어떤 조건을 만족시키는 행을 `SELECTION` 하는 부분에서 `EXPRESSION` 에 상수값이 쓰일때가 있다. 이 때 이 상수값이 정해져 있는 값이 아니라 어떤 SQL 쿼리 문장의 결과에서 나타나는 값을 사용할 수 있는데, 이런 상황에서 Subquery를 사용한다. 쿼리 문장에서 사용하는 상수값을 다른 쿼리 문장의 값으로 사용하고자 할때 Subquery를 사용한다.
 
 ### WHERE 절에서 서브쿼리 사용하기
 
@@ -115,13 +167,56 @@ WHERE SAL > ANY (SELECT SAL
 
 위 쿼리는 IT_PROG 직무를 수행하는 어느 특정 사원보다 많은 급여를 받고 있는 사원의 이름과 급여를 출력한다.
 
+```sql
+SELECT DEPTNO, DNAME
+FROM DEPT
+WHERE DEPTNO NOT IN (SELECT DEPTNO
+                 FROM EMP2);
+```
+
+위 쿼리는 사원이 한명도 근무하지 않는 부서를 찾으려고 시도한 쿼리이다. 그러나 이 쿼리는 EMP2 테이블에 부서를 NULL로 갖는 사원 데이터가 있어서 잘못된 쿼리이다. 부모 쿼리의 DEPTNO가 NOT IN 조건에 나타난 다른 모든 DEPTNO와 다르다고 해도, NULL 값과 비교한 값이 NULL이기 때문에 결과적으로 NOT IN 연산 결과가 NULL이 되버리기 때문이다. 이 경우에 NULL값을 미리 제거하여 처리해야한다.
+
+```SQL
+SELECT DEPTNO, DNAME
+FROM DEPT
+WHERE DEPTNO NOT IN (SELECT DEPTNO
+                 FROM EMP2
+                 WHERE DEPTNO is not null);
+```
+
+#### Corelated Subquery
+
+위 문제는 Corelated Subquery 로도 해결할 수 있다.
+
+```sql
+-- Exists
+-- correlated subquery 
+select *
+from dept M 
+where     EXISTS  (  select  null from emp
+                             where deptno = M.dpetno );
+-- Not Exists
+-- correlated subquery 
+select *
+from dept M 
+where   NOT  EXISTS  (  select  null from emp2
+                             where deptno = M.dpetno );
+```
+
+Corelated Subquery의 경우 부모 쿼리에서 추출한 행 한건에 대해서 자식 쿼리를 한번 처리하는 방식으로 부모와 자식 쿼리를 왔다 갔다 하면서 subquery를 처리한다. 사원이 없는 부서를 검색하는 쿼리에서는 부모 쿼리의 행 하나에 대해서 해당 dept와 일치하는 emp2의 deptno가 있는지를 하나씩 체크하는 방식으로 변했기 때문에 NULL을 따로 처리해주지 않아도 된다.
+
 ### 다중열(Multiple Column) 서브쿼리 사용하기
 
 ```sql
-SELECT
-FROM EMP
-WHERE (DEPTNO, )
+SELECT first_name, department_id, salary
+FROM employees
+WHERE (salary, department_id) IN (SELECT min(salary), department_id
+                                  FROM employees
+                                  GROUP BY department_id)
+ORDER BY department_id;
 ```
+
+위 쿼리는 각 부서에서 급여를 제일 적게 받는 사원의 정보 구한다.
 
 ### FROM 절에서 서브쿼리 사용하기 : inline view
 
@@ -140,3 +235,141 @@ SELECT ENAME, SAL, (SELECT AVG(SAL) FROM EMP)
 FROM EMP
 WHERE SAL > (SELECT AVG(SAL) FROM EMP);
 ```
+
+## 9장 집합 연산자 사용
+
+집합 연산자를 이용해서 여러 개의 쿼리 결과를 집합연산할 수 있다. 다음과 같은 집합 연산자들이 있다.
+
+- UNION ALL : 합집합. 중복데이터 포함
+- UNION : 합집합, 중복데이터 미포함, 정렬된 결과
+- INTERSECT : 교집합, 중복데이터 미포함, 정렬된 결과
+- MINUS : 차집합, 중복데이터 미포함, 정렬된 결과
+
+집합 연산을 수행하는 두 개 이상의 쿼리의 SELECT 리스트는 동일해야 한다. 또는 NULL 값을 표시하여 SELECT 리스트를 맞춰줄 수 있다.
+
+### UNION, UNION ALL
+
+#### UNION ALL
+
+2개 이상의 쿼리 결과 테이블을 합집합한다. 중복된 데이터가 있어도 모두 포함한다.
+
+```sql
+select empno, ename
+from emp
+where deptno = '100'
+UNION ALL
+select empno, ename
+from emp
+where deptno = '200';
+```
+
+위 쿼리는 100번 부서에 근무하는 사원들과 200번 부서에 근무하는 사원들을 모두 출력한다.
+
+#### UNION
+
+중복된 데이터는 포함하지 않는다. 또한 결과 테이블을 정렬하여 표시한다.
+
+```sql
+SELECT EMPLOYEE_ID, JOB_ID FROM EMPLOYEES
+UNION
+SELECT EMPLOYEE_ID, JOB_ID FROM JOB_HISTORY;
+```
+
+#### INTERSECT
+
+```sql
+SELECT EMPLOYEE_ID, JOB_ID, DEPARTMENT_ID FROM EMPLOYEES
+INTERSECT
+SELECT EMPLOYEE_ID, JOB_ID, DEPARTMENT_ID FROM JOB_HISTORY;
+```
+
+이전에 다녔던 부서에서 동일한 직무를 수행한적이 있는 사원
+
+#### MINUS
+
+```sql
+SELECT EMPLOYEE_ID FROM EMPLOYEES
+MINUS
+SELECT EMPLOYEE_ID FROM JOB_HISTORY;
+```
+
+입사 이 후 부서와 직무가 변경된적이 없는 사원들
+
+### 집합 연산으로 rollup, cube 연산
+
+```sql
+-- 집합 연산을 사용해서 ROLL UP, CUBE, GROUPING SETS 연산 하기
+-- 그러나 연산 수행 시간은 더 느리다.
+-- 컬럼 ALIAS는 첫번째 SELECT 문에 나타난 것만 유효하다.
+-- ORDER BY 절은 첫번째 select query의 열만 인식한다.
+SELECT DEPTNO, JOB, SUM(SAL)
+FROM EMP
+GROUP BY DEPTNO, JOB
+UNION ALL
+SELECT DEPTNO, NULL, SUM(SAL)
+FROM EMP
+GROUP BY DEPTNO
+UNION ALL
+SELECT NULL, NULL, SUM(SAL)
+FROM EMP
+ORDER BY 1, 2;
+```
+
+## 10장 DML 문을 사용하여 테이블 관리
+
+### 테이블에 새 행 추가 INSERT
+
+```sql
+INSERT INTO table_name[(column1, column2, ...)]
+VALUES(arg1, arg2, arg3);
+```
+
+- 테이블 이름 다음에 컬럼을 생략하면 모든 컬럼의 값을 추가한다.
+- 테이블 이름 다음에 컬럼의 이름을 괄호로 묶어 나타내면, 데이터를 입력할 컬럼과 순서를 정해줄 수 있다.
+- 일부 컬럼을 명시하지 않으면 해당 컬럼에는 NULL값이 추가된다.
+- VALUES에도 NULL 값을 입력하여 값을 입력하지 않을 컬럼에 NULL을 지정할 수 있다.
+
+#### 스칼라 서브 쿼리
+
+```sql
+INSERT INTO EMP2 (EMPNO, ENAME, HIREDATE, SAL)
+VALUES (7000, USER, SYSDATE, (SELECT MAX(SAL) FROM EMP)); -- 스칼라 서브쿼리
+```
+
+INSERT 문에 서브쿼리를 추가하여 값을 동적으로 입력할 수 있다.
+
+#### Extract Transfrom Loading
+
+```sql
+-- ETL : Extract Transform Loading
+-- insert select
+INSERT INTO EMP3
+SELECT EMPNO, ENAME, SAL*12 FROM EMP;
+```
+
+OLAP 업무시 한 테이블에서 데이터를 추출(Extract)하고, 이를 변형(Transform) 한 뒤 다른 테이블에 넣는(Loading) 연산을 수행할 수 있다.
+
+### 테이블의 데이터 변경 UPDATE
+
+```sql
+UPDATE table_name
+SET column = <expression>[, column = <expression>]
+[WHERE condition]
+```
+
+```sql
+UPDATE DEPT
+SET LOC = 'PUSAN'
+WHERE LOC IS NULL;
+```
+
+### 테이블의 데이터 삭제 DELETE
+
+```sql
+DELETE [FROM] table_name
+[WHERE condition]
+```
+
+#### Truncate
+
+Truncate는 테이블의 모든 데이터를 삭제하고, 테이블의 구조만을 남겨두는 DDL 연산이다. DELETE와는 다르게 DDL이기 때문에 이 연산 하나가 하나의 Transaction으로 처리된다. 따라서 ROLLBACK으로 데이터 삭제를 되돌릴 수 없다.
