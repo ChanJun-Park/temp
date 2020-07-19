@@ -17,7 +17,7 @@ RDBMS를 이용해서 데이터를 관리하기 위해서는 먼저 관리해야
 
 #### 분석 단계
 
-![db_modeling]]({{ "/assets/img/img_multi_2/data_modeling1.png" | absolute_url }})
+![db_modeling]({{ "/assets/img/img_multi_2/data_modeling1.png" | absolute_url }})
 
 Analyst는 먼저 업무에 필요한 data를 분석한다. 해당 업무를 분석하기 위해서 담당 부서와의 인터뷰가 수행될 수도 있다. 특정 업무에서 DB로 관리돼야 하는 대상을 파악했을때 이 대상을 `Entity` 로 표현한다. 또한 비즈니스 관점에서 `Entitiy` 를 표현하는 여러가지 특성들을 `Attribute` 라고 한다. 이들 `Attribute` 중에서 하나의 Entitiy를 유일하게 식별해주는 것을 `UID` 라고 하며, '#' 기호로 표시한다. 필수적인 `Attribute` 는 '*' 로 표현한다.
 

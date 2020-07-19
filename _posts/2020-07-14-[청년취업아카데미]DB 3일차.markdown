@@ -1,0 +1,421 @@
+---
+layout: post
+comments: true
+title:  "[청년취업아카데미] DB 3일차 변환함수, 그룹함수, 조인 초반"
+date:   2020-07-14 22:07:51 +0900
+categories: study
+---
+## 5장 : 변환 함수 및 조건부 표현식 사용
+
+### 데이터의 변환
+
+오라클 DB 칼럼에는 지정된 유형의 데이터 뿐만 아니라 다른 유형의 데이터가 저장될 수도 있다. 그러나 데이터가 저장되는 시점에서 컬럼에 저장될 수 있는 데이터 유형으로 변경된다. 이 같은 상황 뿐만 아니라 다양한 상황에서 데이터의 유형이 변경되어 사용될 수 있다.
+
+데이터의 유형 변경 상황의 종류로는 `암시적 데이터 유형 변환` 과 `명시적 데이터 유형 변환` 이 있다.
+
+#### 암시적 데이터 유형 변환
+
+```sql
+select ename, hiredate
+from emp
+where hiredate > '20/07/14';
+```
+
+위의 쿼리의 경우 hiredate 컬럼은 `DATE` 타입이고, '20/07/14' 은 문자열 데이터이다. 그러나 '20/07/14' 문자열이 NLS_Date_Format과 일치하는 경우 오라클 서버가 이를 자동적으로 `DATE` 타입으로 변환하여 두 값의 비교가 가능해진다. 이처럼 문자열 데이터가 적절한 포맷을 가지고 있을 경우 `DATE` 타입이나 `NUMBER` 타입으로의 암시적인 데이터 유형 변환이 일어날 수 있다.
+
+또다른 예시
+
+```sql
+select empno, ename
+from emp
+where empno = '7070';
+```
+
+#### 명시적 데이터 변환
+
+명시적인 변환 함수를 사용해서 데이터의 유형을 변경할 수 있다.
+
+##### DATE 타입을 문자열 타입으로 변경 : to_char()
+
+날짜 타입을 to_char() 함수를 통해서 문자 타입으로 변경할 수 있다. 보통 나라마다 날짜를 표기하는 방법이 다른데, 이 경우 날짜를 이용해서 SELECTION 을 진행할 때나, INSERT 할 때 데이터를 클렌징(Cleansing) 하기 위해서 많이 사용한다.
+
+```sql
+select ename, hiredate
+from emp
+where to_char(hiredate) = '20/07/14';
+```
+
+`DATE` 타입을 문자열 타입으로 변경할 경우, 어떤 포맷의 문자열로 변경할 것인지를 명시해줄수 있다.
+
+```sql
+select ename, hiredate
+from emp
+where to_char(hiredate, 'RR/MM/DD') = '20/07/14';
+```
+
+문자 데이터로 출력하는 포맷에 대한 규칙은 여러가지가 있다.
+
+- YYYY : 숫자 전체로 된 연도
+- RR : 2자리 숫자로 된 연도
+- MM : 2자리 월 수 
+- MON : 월 이름 축약형
+- MONTH : 월 이름 풀네임
+- DDD : 1년 단위 일 수
+- DD : 1달 단위 일 수 
+- D : 1주 단위 일 수
+- DAY : 요일 이름
+- DY : 요일 이름 축약형
+- HH : 12시간 단위 시간
+- HH24 : 24 시간 단위 시간
+- MI : 분
+- SS : 초
+- WW : 1년 단위 주 수
+- W : 월 단위 주 수
+- TH : 숫자 서수로 표시
+- SP : 영어 이름으로 표시
+- SPTH : 영어 이름으로 된 서수
+- fm : leading 0를 제거한다.
+
+문자열 내부에 다른 문자열을 추가할 경우 "" 로 감싸 준다.
+
+```sql
+to_char(hiredate, 'MM "of the " YYYY');
+```
+
+##### NUMBER 타입을 문자열 타입으로 변경 : to_char()
+
+```sql
+select empno, ename
+from emp
+where to_char(empno) = '7070';
+```
+
+숫자 타입을 문자열로 변경하는 이유는 통화기호($)와 같은 여러가지 서식을 추가해주기 위해서이다. to_char 함수의 2번째 인자로 문자열로 변환될 숫자의 포맷을 지정해줄 수 있다.
+
+```sql
+to_char(number_data, '$99,999.00')
+```
+
+- $ : 달러 표시
+- L : NLS_territory 에서 설정된 통화기호를 표시
+- 9 : 숫자 한자리
+- , : 천 단위 구분자
+- . : 소수점 구분자
+- 0 : 숫자 0
+
+##### 문자 타입을 DATE 타입으로 변경 : to_date()
+
+```sql
+select ename, hiredate
+from emp
+where hiredate > to_date('07-14-MON', 'MM-DD-DAY');
+```
+
+문자열 데이터를 `DATE` 타입으로 변환할 경우 해당 문자열이 어떤 날짜 포맷으로 표현되어 있는지를 서술해주어야 `DATE` 타입으로 변경할 수 있다.
+
+##### 문자 타입을 NUMBER 타입으로 변경 : to_number()
+
+문자 타입을 계산 가능한 값으로 변경하고자 할 때, to_number() 함수를 사용한다.
+
+### 일반함수
+
+일반함수는 모든 일반적인 데이터 타입을 인자로 전달할 수 있는 함수를 의미한다. 다음과 같은 일반 함수들이 있다.
+
+- NVL(arg1, arg2) : arg1이 NULL일 경우 arg2 반환
+- NVL2(arg1, arg2, arg3) : arg1이 NULL이 아닐 경우 arg2 반환, NULL일 경우 arg3 반환
+- NULLIF(arg1, arg2) : 두 값이 같을 경우 NULL 반환, 아닌 경우 첫번째 값 반환
+- COALECSE(arg1, arg2, arg3, arg4, ...) : 인자로 전달한 값 중 NULL이 아닌 첫번째 인자를 반환
+
+### 조건부 표현식
+
+#### DECODE 함수
+
+```
+DECODE (column | expression, 비교값, 표시할 값
+                          [, 비교값, 표시할 값]
+                                  [, 디폴트 값])
+```
+
+DECODE 함수는 IF~THEN~ELSE 구조를 구현하는 함수이다. 첫번째 인자의 값이 이 후에 반복해서 등장하는 비교값과 같을 경우 해당 비교값 바로 다음에 나오는 표시값을 반환한다. 인자로 전달된 모든 비교값과 동일하지 않은 경우 맨 마지막에 전달한 값이 반환된다.
+
+```sql
+SELECT last_name, job_id, salary,
+        DECODE(job_id, 'IT_PROG', 1.10 * SALARY,
+                       'ST_CLERK', 1.15 * SALARY,
+                       'SA_REP', 1.20 * SALARY,
+                       SALARY) REVISED_SALARY
+FROM EMPLOYEES;                       
+```
+
+#### CASE 식
+
+```
+CASE {column | expression} WHEN 비교값1 THEN 표시할 값1
+                          [WHEN 비교값2 THEN 표시할 값2]
+                          [ELSE 디폴트값]
+END 
+```
+
+DECODE 함수와 유사. 그러나 훨씬 더 가독성이 좋다.
+
+#### CASE 함수
+
+```
+CASE WHEN condition THEN 표시할 값1
+    [WHEN condition THEN 표시할 값2]
+    [ELSE 디폴트값]
+END 
+```
+
+expression 을 통해서 컬럼이나 연산식의 범위 값에 따라서 값을 출력할 수 있다.
+
+## 6장 : 그룹 함수를 사용하여 집계된 데이터를 보고
+
+### 그룹 함수
+
+그룹 함수는 여러개의 행을 인자로 받아 그룹별로 하나의 값을 반환하는 함수를 말한다. 다음과 같은 그룹 함수들이 있다.
+
+- COUNT
+- SUM
+- AVG
+- MAX
+- MIN
+
+```sql
+SELECT group_function(column), ...
+FROM table_name
+[WHERE condition];
+```
+
+#### COUNT
+
+```sql
+SELECT count(*)
+FROM emp;
+```
+
+전체 행의 개수를 출력한다.
+
+```sql
+SELECT COUNT(EMPNO)
+FROM EMP;
+```
+
+NULL 값이 아닌 EMPNO 속성의 값의 개수를 출력한다.
+
+```sql
+SELECT COUNT(DISTINCT EMPNO)
+FROM EMP;
+```
+
+NULL 값이 아니고, 중복되지 않은 EMPNO 속성의 값의 개수를 출력한다.
+
+#### 그룹 함수에서 NULL 값 처리
+
+기본적으로 그룹 함수에서는 NULL 값을 가지고 있는 행은 무시한다. 그러나 COUNT(*) 를 이용해서 전체 행의 개수를 셀 때에는 NULL 값을 무시하지 않는다.
+
+
+```sql
+SELECT AVG(SAL), AVG(nvl(SAL, 0))
+FROM EMP;
+```
+
+위 쿼리의 2개의 그룹 함수는 서로 다른 값을 반환할 수 있다. 오른쪽 그룹함수는 NULL 값에 대해서 무시하지 않고 0으로 처리함으로써 평균을 계산하는데 포함하기 때문이다.
+
+#### GROUP BY
+
+GROUP BY 절을 이용해서 어떤 컬럼의 값을 기준으로 그룹을 형성할 것인지 명시할 수 있다.
+
+```sql
+SELECT SUM(SAL)
+FROM EMP
+GROUP BY DEPTNO;
+```
+
+위 쿼리문은 부서별로 급여의 합계를 구한 값들을 보여준다. 어느 부서의 급여 합계인지를 보여주기 위해서는 GROUP BY에서 명시한 그룹을 짓는데 기준이 되었던 열의 이름을 SELECT 절에서도 명시해주면 된다.
+
+```sql
+SELECT DEPTNO, SUM(SAL)
+FROM EMP
+GROUP BY DEPTNO;
+```
+
+그룹 함수가 사용된 `SELECT` 문에서 SELECT 절에 등장하는 열(column)들은 반드시 GROUP BY 에 명시된 열(column)들이어야 한다.
+
+#### HAVING
+
+그룹함수와 group by 절을 이용해서 추출된 데이터에 SELECTION 하기를 원할 수 있다. 다음과 같은 쿼리가 그런 요구를 반영한다.
+
+```sql
+SELECT DEPTNO, SUM(SAL)
+FROM EMP
+WHERE SUM(SAL) > 20000
+GROUP BY DEPTNO;
+```
+
+그러나 WHERE 절에서는 그룹 함수를 사용할 수 없기 때문에 위 쿼리 문장은 오류가 발생한다. 그룹함수와 GROUP BY 절을 이용해서 추출한 데이터를 selection 하기 위해서는 having 절을 이용할 수 있다.
+
+```sql
+SELECT DEPTNO, SUM(SAL)
+FROM EMP
+GROUP BY DEPTNO
+HAVING SUM(SAL) > 20000;
+```
+
+그룹 함수 값에 컬럼 alias를 준 경우 HAVING 절에서도 쓸 수 있을 거라고 생각할 수 있지만 그렇지 않다.
+
+```sql
+SELECT DEPTNO, SUM(SAL) as TOTAL
+FROM EMP
+GROUP BY DEPTNO
+HAVING TOTAL > 20000; -- 이 부분에서 오류가 발생한다.
+```
+
+쿼리 문장의 실행 순서를 파악한다면 HAVING 절에서 왜 컬럼 alias를 사용할 수 없는지 쉽게 파악할 수 있다. sql 쿼리 문장은 다음과 같은 순서대로 실행된다.
+
+```sql
+SELECT 4
+FROM 1
+WHERE 2
+GROUP BY 3
+HAVING 3 -- GROUP BY 와 동시에 실행된다고 생각할 수 있다.
+ORDER BY 5
+```
+
+#### ROLL UP
+
+그룹 함수를 이용해서 집계 결과를 낼 때, 각 그룹별 그룹함수 값과 함께, 소계, 총계 와 같은 값들을 계산하고자 할때가 있다. 그럴때 `ROLL UP` 을 이용해서 소계, 총계와 같은 집합들을 표시할 수 있다.
+
+```sql
+SELECT DEPTNO, JOB, SUM(SAL)
+FROM EMP
+GROUP BY ROLLUP(DEPTNO, JOB)
+ORDER BY 1, 2;
+```
+
+위 쿼리는 부서 그룹 안에서 직무별 급여 합계, 부서별 급여 합계, 총 합계의 3가지 집합의 값들이 출력된다. ROLL UP 내부에 명시된 컬럼이 n개 일때 n+1 의 집합이 생성된다.
+
+#### CUBE
+
+CUBE는 GROUP BY에 명시된 컬럼들의 가능한 모든 조합에 대해서 그룹별 집계를 출력한다.
+
+```sql
+SELECT DEPTNO, JOB, SUM(SAL)
+FROM EMP
+GROUP BY CUBE(DEPTNO, JOB)
+ORDER BY 1, 2;
+```
+
+위 쿼리는 부서 그룹 안에서 직무별 급여 합계, 부서별 급여 합계, 직무별 급여 합계, 총 합계의 4가지 집합의 값들이 출력된다. CUBE 내부에 명시된 컬럼이 n개 일때 2^n 개의 집합이 생성된다.
+
+#### GROUPING SET
+
+`GROUPING SET` 은 ROLL UP, CUBE와 다르게 원하는 그룹핑 조합을 직접 지정할 수 있다.
+
+```sql
+-- 원하는 그룹핑 조합을 지정할 수 있다.
+SELECT DEPTNO, JOB, SUM(SAL)
+FROM EMP
+GROUP BY GROUPING SETS ((DEPTNO, JOB), (JOB), ())
+ORDER BY 1, 2;
+```
+
+## 7장 : JOIN을 사용하여 다중 테이블의 데이터 표시
+
+### JOIN 유형 및 구문
+
+#### Oracle Syntax
+
+```sql
+SELECT ename, dept.dname
+FROM emp e, dept d
+WHERE e.deptno = d.deptno
+```
+
+#### ANSI Syntax
+
+ANSI Syntax 에서는 JOIN 조건을 ON 절로 따로 빼낼 수 있다는 장점이 있다.
+
+```sql
+SELECT ename, dept.dname
+FROM emp e JOIN dept d
+ON e.deptno = d.deptno
+```
+
+### Natural Join
+
+조인하는 두 테이블의 이름이 동일한 컬럼들을 자동으로 JOIN 조건으로 사용한다.
+
+```sql
+SELECT ename, dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+이와 같은 Natural Join은 기계적으로 이름이 동일한지만을 확인하기 때문에 실제로 두 컬럼이 동일한 의미를 나타내는지를 정확히 확인해야한다.
+
+```sql
+SELECT ename, d.deptno, d.dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+위 문장은 에러가 발생하는데 SELECT 절에 `d.deptno` 처럼 TABLE alias 를 적용한 것이 문제가 된 것이다. NATURAL JOIN을 사용할 경우 SELECT 절에서 행을 뽑아내는 조인 결과 테이블에는 두 개의 테이블에 있던 deptno가 합쳐져서 나타나있다. 따라서 어느 테이블 소속의 컬럼인지를 파악할 수 없기 때문에 아래처럼 table alias를 제외한 `deptno`을 작성해야한다.
+
+```sql
+SELECT ename, deptno, d.dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+#### USING 절을 이용해서 NATURAL JOIN에 사용할 컬럼 명시
+
+```sql
+SELECT ename, deptno, d.dname
+FROM emp e NATURAL JOIN dept d
+USING (deptno);
+```
+
+#### NATURAL JOIN 이나 USING 절 사용시 열이름 한정 사용 불가
+
+```sql
+SELECT ename, d.deptno, d.dname
+FROM emp e NATURAL JOIN dept d;
+```
+
+앞서 위 쿼리문의 오류에서 살펴보았던것 처럼 `USING` 절에서도 NATURAL JOIN에 사용된 열은 alias나 table 이름으로 열 이름을 한정하면 안된다. 그 이유는 앞선 예제에서와 동일하다.
+
+```sql
+SELECT ename, deptno, d.dname
+FROM emp e NATURAL JOIN dept d
+USING (d.deptno);
+```
+
+### 3-WAY JOIN
+
+추출하고자 하는 데이터가 3개의 테이블에 분산되어 있는 경우 join 연산을 여러번 수행하여 원하는 값을 추출할 수 있다.
+
+#### Oracle Syntax
+
+```sql
+SELECT LAST_NAME, D.DEPARTMENT_NAME, L.CITY
+FROM EMPLOYEES E, DEPARTMENTS D, LOCATIONS L
+WHERE E.DEPARTMENT_ID = D.DEPARTMENT_ID
+AND D.LOCATION_ID = L.LOCATION_ID;
+```
+
+#### ANSI Syntax
+
+```sql
+SELECT LAST_NAME, D.DEPARTMENT_NAME, L.CITY
+FROM EMPLOYEES E JOIN DEPARTMENTS D
+ON (E.DEPARTMENT_ID = D.DEPARTMENT_ID)
+JOIN LOCATIONS L
+ON (D.LOCATION_ID = L.LOCATION_ID);
+```
+
+```sql
+select last_name, department_name, city
+from  employees e JOIN  departments d
+ON e.department_id = d.department_id
+JOIN Locations l
+ON d.location_id = l.location_id
+where l.location_id = 1700;    --  추가조건은 WHERE 절에
+```
